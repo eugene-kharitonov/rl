@@ -41,8 +41,7 @@ class DoomAgent(object):
         self.rewards = tf.placeholder(tf.float32, [None, 1], 'rewards')
 
         self.per_action_log_prob = tf.reduce_sum(self.O2 * self.actions_one_hot, reduction_indices = [1])
-        #regularised_loss = -tf.reduce_sum((rewards - tau - tau * tf.log(action_probs)) * tf.log(action_probs * (1 - actions) + actions * (1 - action_probs)), reduction_indices=[0])
-        self.loss = -tf.reduce_sum(self.rewards * tf.log(self.per_action_log_prob))
+        self.loss = tf.reduce_sum(self.rewards * tf.log(self.per_action_log_prob))
         self.train_step = tf.train.AdamOptimizer(0.01).minimize(self.loss)
 
         init = tf.initialize_all_variables()
@@ -113,4 +112,4 @@ def learn(episodes, max_steps_per_episode, visualisation_freq):
             ENV.monitor.close()
 
 if __name__ == '__main__':
-    learn(500, None, 100)
+    learn(50000, None, 100)
