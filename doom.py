@@ -10,21 +10,11 @@ import prettytensor as pt
 import tensorflow as tf
 import cv2
 
-ENV = gym.make('ppaquette/DoomBasic-v0')
-ENV = wrappers.SkipWrapper(3)(ENV)
-wrapper = ppaquette_gym_doom.wrappers.action_space.ToDiscrete('minimal')
-ENV = wrapper(ENV)
+# screen resolution 
 X, Y = 320, 240
-wrapper = ppaquette_gym_doom.wrappers.observation_space.SetResolution('%sx%s'%(X, Y))
 XY = X * Y
-ENV = wrapper(ENV)
+# crop a smaller region of interest to improve learning speed
 crop_X_l, crop_X_u = 95, 120
-
-def conv2d(x, W):
-  return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
 class DoomAgent(object):
     def __init__(self, restore = False):
@@ -40,7 +30,7 @@ class DoomAgent(object):
             .conv2d(patch, depth, stride = (2,2), batch_normalize=True)
             .conv2d(patch, depth, stride = (2,2), batch_normalize=True)
             .flatten()
-            .dropout(0.5)
+            .dropout(0.5) #stays inference time, too: sort of exploration %)
             .fully_connected(num_hidden, activation_fn=tf.nn.relu)
             .softmax_classifier(3))
 
@@ -111,12 +101,8 @@ class DoomAgent(object):
         ob = self.transform_input(ob)
         self.episode_observations.append(ob)
 
-def learn(episodes, visualisation_freq, restore, monitor):
-    outdir = './output/'
+def learn(env, episodes, visualisation_freq, restore, chckpoints):
     agent = DoomAgent(restore)
-    env = ENV
-    if monitor:
-        env = wrappers.Monitor(ENV, './output/', force=True)
     for episode in xrange(episodes):
         done = False
         ob = env.reset()
@@ -138,7 +124,7 @@ def learn(episodes, visualisation_freq, restore, monitor):
         print info['TOTAL_REWARD']
         agent.end_episode()
         if (episode + 1) % visualisation_freq == 0:
-            agent.saver.save(agent.sess, 'chckpoints/model', global_step=episode)
+            agent.saver.save(agent.sess, '{}/model'.format(chckpoints), global_step=episode)
 
 if __name__ == '__main__':
     import argparse
@@ -147,7 +133,25 @@ if __name__ == '__main__':
     parser.add_argument('--restore', type=bool, default=False)
     parser.add_argument('--monitor', type=bool, default=False)
     parser.add_argument('--dump_freq', type=int, default=100)
+    parser.add_argument('--iterations', type=int, default=50000)
+    parser.add_argument('--chckpoints', type=str, default='chckpoints')
+    parser.add_argument('--skip_rate', type=int, default=3)
+    parser.add_argument('--api_key', type=str, default=None)
     args = parser.parse_args()
 
     print args
-    learn(50000, args.dump_freq, args.restore, args.monitor)
+
+    env = gym.make('ppaquette/DoomBasic-v0')
+    env = wrappers.SkipWrapper(args.skip_rate)(env)
+    wrapper = ppaquette_gym_doom.wrappers.action_space.ToDiscrete('minimal')
+    env = wrapper(env)
+    wrapper = ppaquette_gym_doom.wrappers.observation_space.SetResolution('%sx%s'%(X, Y))
+    env = wrapper(env)
+    if args.monitor:
+        env = wrappers.Monitor(env, './output/', force=True)
+
+    learn(env, args.iterations, args.dump_freq, args.restore, args.chckpoints)
+
+    if args.api_key and args.monitor:
+        gym.upload('./output/', api_key=args.api_key)
+
