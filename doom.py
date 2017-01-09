@@ -8,11 +8,7 @@ import gym
 from gym import wrappers
 import prettytensor as pt
 import tensorflow as tf
-from PIL import Image
-from scipy.misc import logsumexp
-#from skimage.color import rgb2gray
 import cv2
-from skimage.transform import resize
 
 ENV = gym.make('ppaquette/DoomBasic-v0')
 ENV = wrappers.SkipWrapper(3)(ENV)
