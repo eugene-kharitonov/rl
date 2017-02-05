@@ -152,6 +152,7 @@ if __name__ == '__main__':
 
     learn(env, args.iterations, args.dump_freq, args.restore, args.chckpoints)
 
+    env.close()
     if args.api_key and args.monitor:
         gym.upload('./output/', api_key=args.api_key)
 
