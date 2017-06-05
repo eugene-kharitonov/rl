@@ -5,7 +5,6 @@ Some experiments with RL, using tensorflow:
 
   Here are some examples:
 
-[](3.png?raw=true)
+[![image1](https://github.com/eugene-kharitonov/rl/raw/master/3.gif)](https://github.com/eugene-kharitonov/rl/raw/master/3.gif)
 
-[](4.png?raw=true)
-
+[![image1](https://github.com/eugene-kharitonov/rl/raw/master/4.gif)](https://github.com/eugene-kharitonov/rl/raw/master/4.gif)
